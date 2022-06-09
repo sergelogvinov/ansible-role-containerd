@@ -1,0 +1,10 @@
+---
+
+containerd_ppa_use: no
+containerd_allow_upgrade: yes
+containerd_package: ['containerd','containernetworking-plugins']
+containerd_version: ''
+
+containerd_service_restart: false
+
+containerd_domain_certs: []

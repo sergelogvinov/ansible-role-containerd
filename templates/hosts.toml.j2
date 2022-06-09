@@ -1,0 +1,5 @@
+server = "https://{{ item }}"
+
+[host."https://{{ item }}"]
+   capabilities = ["pull", "resolve"]
+   client = [["/etc/containerd/conf.d/{{ item }}/client.cert","/etc/containerd/conf.d/{{ item }}/client.key"]]

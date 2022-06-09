@@ -1,0 +1,71 @@
+---
+
+- include_vars: "{{ item }}"
+  with_first_found:
+    - "../vars/{{ ansible_distribution_release }}.yml"
+    - "../vars/{{ ansible_os_family }}.yml"
+    - "../vars/empty.yml"
+
+- name: 'Install containerd'
+  become: yes
+  apt:
+    name: "{{ containerd_package | map('regex_replace', '^(.*)$', '\\1='+containerd_version) | list if containerd_version != '' else containerd_package }}"
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Prepare folders
+  become: yes
+  file:
+    path: "/etc/containerd/conf.d/{{ item }}"
+    mode: 0750
+    owner: root
+    group: root
+    state: directory
+  with_items:
+    - ""
+    - "{{ containerd_domain_certs }}"
+
+- name: Copy certs
+  become: yes
+  copy: src="{{ playbook_dir }}/files/containerd/{{ item }}/" dest="/etc/containerd/conf.d/{{ item }}" mode=0640
+  with_items:
+    - "{{ containerd_domain_certs }}"
+
+- name: Update hosts config
+  become: yes
+  template:
+    src: "hosts.toml.j2"
+    dest: "/etc/containerd/conf.d/{{ item }}/hosts.toml"
+    owner: root
+    group: root
+    mode: 0700
+  with_items:
+    - "{{ containerd_domain_certs }}"
+
+- name: Update main config
+  become: yes
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  when: item.when
+  with_items:
+    - { src: "config.toml.j2", dest: "/etc/containerd/config.toml", hosts: "{{ containerd_domain_certs }}", mode: '0644', when: true }
+
+- name: 'Enable the containerd service'
+  become: yes
+  service:
+    name: 'containerd'
+    enabled: "{{ ansible_virtualization_type|default('') != 'lxc' }}"
+  when: ansible_os_family == "Debian"
+
+- name: 'Start the containerd service'
+  become: yes
+  service:
+    name: 'containerd'
+    state: "{% if ansible_virtualization_type|default('') != 'lxc' %}restarted{% else %}stopped{% endif %}"
+    enabled: "{{ ansible_virtualization_type|default('') != 'lxc' }}"
+  when: ansible_os_family == "Debian" and containerd_service_restart|bool # and containerd_config.changed|bool

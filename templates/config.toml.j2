@@ -1,0 +1,19 @@
+version = 2
+
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    [plugins."io.containerd.grpc.v1.cri".cni]
+      bin_dir = "/opt/cni/bin"
+      conf_dir = "/etc/cni/net.d"
+
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/containerd/conf.d"
+
+{% for host in item.hosts %}
+    [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ host }}".tls]
+      cert_file = "/etc/containerd/conf.d/{{ host }}/client.cert"
+      key_file = "/etc/containerd/conf.d/{{ host }}/client.key"
+{% endfor %}
+
+  [plugins."io.containerd.internal.v1.opt"]
+    path = "/var/lib/containerd/opt"
