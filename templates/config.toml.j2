@@ -9,11 +9,11 @@ version = 2
     [plugins."io.containerd.grpc.v1.cri".registry]
       config_path = "/etc/containerd/conf.d"
 
-{% for host in item.hosts %}
-    [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ host }}".tls]
-      cert_file = "/etc/containerd/conf.d/{{ host }}/client.cert"
-      key_file = "/etc/containerd/conf.d/{{ host }}/client.key"
-{% endfor %}
+{% for host in item.hosts %}{% if host.auth.cert is defined %}
+    [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ host.domain }}".tls]
+      cert_file = "/etc/containerd/conf.d/{{ host.domain }}/client.cert"
+      key_file = "/etc/containerd/conf.d/{{ host.domain }}/client.key"
+{% endif %}{% endfor %}
 
   [plugins."io.containerd.internal.v1.opt"]
     path = "/var/lib/containerd/opt"

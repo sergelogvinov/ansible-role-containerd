@@ -17,31 +17,39 @@
 - name: Prepare folders
   become: yes
   file:
-    path: "/etc/containerd/conf.d/{{ item }}"
+    path: "/etc/containerd/conf.d/{{ item.domain | default() }}"
     mode: 0750
     owner: root
     group: root
     state: directory
   with_items:
     - ""
-    - "{{ containerd_domain_certs }}"
+    - "{{ containerd_mirrors }}"
+  no_log: true
 
 - name: Copy certs
   become: yes
-  copy: src="{{ playbook_dir }}/files/containerd/{{ item }}/" dest="/etc/containerd/conf.d/{{ item }}" mode=0640
-  with_items:
-    - "{{ containerd_domain_certs }}"
+  copy:
+    content: "{{ item.1.auth[item.0] | b64decode }}\n"
+    dest: "/etc/containerd/conf.d/{{ item.1.domain }}/client.{{ item.0 }}"
+    mode: 0640
+  when: item.1.auth is defined and item.1.auth.cert and item.1.auth.key
+  with_nested:
+    - ["cert","key"]
+    - "{{ containerd_mirrors }}"
+  no_log: true
 
 - name: Update hosts config
   become: yes
   template:
     src: "hosts.toml.j2"
-    dest: "/etc/containerd/conf.d/{{ item }}/hosts.toml"
+    dest: "/etc/containerd/conf.d/{{ item.domain }}/hosts.toml"
     owner: root
     group: root
     mode: 0700
   with_items:
-    - "{{ containerd_domain_certs }}"
+    - "{{ containerd_mirrors }}"
+  no_log: true
 
 - name: Update main config
   become: yes
@@ -53,7 +61,8 @@
     mode: "{{ item.mode }}"
   when: item.when
   with_items:
-    - { src: "config.toml.j2", dest: "/etc/containerd/config.toml", hosts: "{{ containerd_domain_certs }}", mode: '0644', when: true }
+    - { src: "config.toml.j2", dest: "/etc/containerd/config.toml", hosts: "{{ containerd_mirrors }}", mode: '0644', when: true }
+  no_log: true
 
 - name: 'Enable the containerd service'
   become: yes

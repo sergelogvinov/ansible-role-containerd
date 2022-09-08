@@ -7,4 +7,12 @@ containerd_version: ''
 
 containerd_service_restart: false
 
-containerd_domain_certs: []
+containerd_mirrors: []
+  # - domain: k8s.gcr.io
+  #   endpoints:
+  #     - https://registry.k8s.io
+  #     - https://k8s.gcr.io
+  # - domain: docker.io
+  #   endpoints:
+  #     - https://registry.ipv6.docker.com
+  #     - https://registry-1.docker.io

@@ -1,5 +1,9 @@
-server = "https://{{ item }}"
+server = "https://{{ item.domain }}"
 
-[host."https://{{ item }}"]
+{% for m in item.endpoints %}
+[host."{{ m }}"]
    capabilities = ["pull", "resolve"]
-   client = [["/etc/containerd/conf.d/{{ item }}/client.cert","/etc/containerd/conf.d/{{ item }}/client.key"]]
+{% if item.auth is defined and item.auth.cert != "" %}
+   client = [["/etc/containerd/conf.d/{{ item.domain }}/client.cert","/etc/containerd/conf.d/{{ item.domain }}/client.key"]]
+{% endif %}
+{% endfor %}
