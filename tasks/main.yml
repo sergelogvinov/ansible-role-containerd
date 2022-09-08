@@ -46,7 +46,7 @@
     dest: "/etc/containerd/conf.d/{{ item.domain }}/hosts.toml"
     owner: root
     group: root
-    mode: 0700
+    mode: 0640
   with_items:
     - "{{ containerd_mirrors }}"
   no_log: true
